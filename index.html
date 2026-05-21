@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sales & Revenue Analysis Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      margin:0;
+      background:#f4f6f9;
+    }
+
+    .header{
+      background:#1f2937;
+      color:white;
+      padding:20px;
+      text-align:center;
+      font-size:28px;
+      font-weight:bold;
+    }
+
+    .container{
+      padding:20px;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
+      margin-bottom:30px;
+    }
+
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      text-align:center;
+    }
+
+    .card h2{
+      margin:10px 0;
+      color:#111827;
+    }
+
+    .card p{
+      color:#6b7280;
+      font-size:18px;
+    }
+
+    .charts{
+      display:grid;
+      grid-template-columns: repeat(auto-fit,minmax(400px,1fr));
+      gap:20px;
+    }
+
+    .chart-box{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    select{
+      padding:10px;
+      margin-bottom:20px;
+      border-radius:8px;
+      border:1px solid #ccc;
+    }
+
+    footer{
+      text-align:center;
+      padding:20px;
+      color:#555;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    Sales & Revenue Analysis Dashboard
+  </div>
+
+  <div class="container">
+
+    <label><b>Filter by Region:</b></label>
+    <select id="regionFilter">
+      <option value="All">All</option>
+      <option value="North">North</option>
+      <option value="South">South</option>
+      <option value="East">East</option>
+      <option value="West">West</option>
+    </select>
+
+    <div class="cards">
+      <div class="card">
+        <p>Total Sales</p>
+        <h2 id="salesValue">0</h2>
+      </div>
+
+      <div class="card">
+        <p>Total Revenue</p>
+        <h2 id="revenueValue">0</h2>
+      </div>
+
+      <div class="card">
+        <p>Top Product</p>
+        <h2 id="topProduct">-</h2>
+      </div>
+    </div>
+
+    <div class="charts">
+
+      <div class="chart-box">
+        <h3>Monthly Revenue Trend</h3>
+        <canvas id="revenueChart"></canvas>
+      </div>
+
+      <div class="chart-box">
+        <h3>Top Performing Products</h3>
+        <canvas id="productChart"></canvas>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    Created for Internship Project Submission
+  </footer>
+
+<script>
+
+const salesData = [
+  {month:"Jan", revenue:12000, sales:100, product:"Laptop", region:"North"},
+  {month:"Feb", revenue:15000, sales:130, product:"Mobile", region:"South"},
+  {month:"Mar", revenue:18000, sales:140, product:"Laptop", region:"East"},
+  {month:"Apr", revenue:22000, sales:170, product:"Tablet", region:"West"},
+  {month:"May", revenue:25000, sales:200, product:"Mobile", region:"North"},
+  {month:"Jun", revenue:27000, sales:220, product:"Laptop", region:"South"},
+];
+
+const revenueChartCtx = document.getElementById('revenueChart');
+const productChartCtx = document.getElementById('productChart');
+
+let revenueChart;
+let productChart;
+
+function updateDashboard(region){
+
+  let filteredData = region === "All"
+    ? salesData
+    : salesData.filter(data => data.region === region);
+
+  let totalSales = filteredData.reduce((sum,data)=>sum+data.sales,0);
+  let totalRevenue = filteredData.reduce((sum,data)=>sum+data.revenue,0);
+
+  document.getElementById("salesValue").innerText = totalSales;
+  document.getElementById("revenueValue").innerText = "$" + totalRevenue;
+
+  const productCount = {};
+
+  filteredData.forEach(item=>{
+    productCount[item.product] = (productCount[item.product] || 0) + item.sales;
+  });
+
+  let topProduct = Object.keys(productCount).reduce((a,b)=>
+    productCount[a] > productCount[b] ? a : b
+  );
+
+  document.getElementById("topProduct").innerText = topProduct;
+
+  const months = filteredData.map(data=>data.month);
+  const revenues = filteredData.map(data=>data.revenue);
+
+  if(revenueChart) revenueChart.destroy();
+
+  revenueChart = new Chart(revenueChartCtx,{
+    type:'line',
+    data:{
+      labels:months,
+      datasets:[{
+        label:'Revenue',
+        data:revenues,
+        borderWidth:3,
+        fill:false
+      }]
+    }
+  });
+
+  if(productChart) productChart.destroy();
+
+  productChart = new Chart(productChartCtx,{
+    type:'bar',
+    data:{
+      labels:Object.keys(productCount),
+      datasets:[{
+        label:'Sales',
+        data:Object.values(productCount),
+        borderWidth:1
+      }]
+    }
+  });
+
+}
+
+updateDashboard("All");
+
+document.getElementById("regionFilter").addEventListener("change",(e)=>{
+  updateDashboard(e.target.value);
+});
+
+</script>
+
+</body>
+</html>
